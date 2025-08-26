@@ -198,9 +198,23 @@ export default function AgentPerformancePage() {
     }
 
     return {
-      totalClients: agentClients.length, // Number of clients added by agent in selected period
-      totalDeposits: agentDeposits.reduce((sum, deposit) => sum + deposit.amount, 0),
-      totalWithdrawals: agentWithdrawals.reduce((sum, withdrawal) => sum + withdrawal.amount, 0),
+      totalClients: agentClients.length,
+      totalDeposits: agentDeposits.reduce((sum, deposit) => sum + (deposit.amount || 0), 0),
+      totalWithdrawals: agentWithdrawals.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0),
+      // Map the performance fields as requested
+      addedToday: agentClients.filter((client) => {
+        const clientDate = new Date(client.kycDate)
+        const today = new Date()
+        return clientDate.toDateString() === today.toDateString()
+      }).length,
+      monthlyAdded: agentClients.filter((client) => {
+        const clientDate = new Date(client.kycDate)
+        const now = new Date()
+        const currentMonthStart = startOfMonth(now)
+        const currentMonthEnd = endOfMonth(now)
+        return isWithinInterval(clientDate, { start: currentMonthStart, end: currentMonthEnd })
+      }).length,
+      openAccounts: agentClients.filter((client) => client.status === "Active").length,
     }
   }
 
@@ -841,7 +855,7 @@ export default function AgentPerformancePage() {
                       <div className="flex items-center space-x-3">
                         <Avatar>
                           <AvatarImage
-                            src={`/placeholder.svg?height=40&width=40&text=${(agent.name || "A").charAt(0)}`}
+                            src={`/placeholder-40x40.png?height=40&width=40&text=${(agent.name || "A").charAt(0)}`}
                           />
                           <AvatarFallback>{(agent.name || "A").charAt(0)}</AvatarFallback>
                         </Avatar>
@@ -1018,7 +1032,7 @@ export default function AgentPerformancePage() {
                   onClick={() => handleSort("calculatedClients")}
                 >
                   <div className="flex items-center justify-center">
-                    Total Clients ({selectedTimeFilterLabel})
+                    Added Today
                     {sortField === "calculatedClients" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4 inline" />
@@ -1032,7 +1046,7 @@ export default function AgentPerformancePage() {
                   onClick={() => handleSort("calculatedDeposits")}
                 >
                   <div className="flex items-center justify-center">
-                    Total Deposits ({selectedTimeFilterLabel})
+                    Monthly Added
                     {sortField === "calculatedDeposits" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4 inline" />
@@ -1046,7 +1060,7 @@ export default function AgentPerformancePage() {
                   onClick={() => handleSort("calculatedWithdrawals")}
                 >
                   <div className="flex items-center justify-center">
-                    Total Withdrawals ({selectedTimeFilterLabel})
+                    Open Accounts
                     {sortField === "calculatedWithdrawals" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4 inline" />
@@ -1054,6 +1068,9 @@ export default function AgentPerformancePage() {
                         <ChevronDown className="ml-1 h-4 w-4 inline" />
                       ))}
                   </div>
+                </TableHead>
+                <TableHead className="cursor-pointer font-medium text-center border-l border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center justify-center">Total Deposits</div>
                 </TableHead>
                 <TableHead className="text-center border-l border-slate-200 dark:border-slate-700">Actions</TableHead>
               </TableRow>
@@ -1104,13 +1121,16 @@ export default function AgentPerformancePage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center border-l border-slate-100 dark:border-slate-800">
-                        <span className="font-medium text-blue-600">{metrics.totalClients}</span>
+                        <span className="font-medium text-blue-600">{metrics.addedToday}</span>
                       </TableCell>
                       <TableCell className="text-center border-l border-slate-100 dark:border-slate-800">
-                        <span className="font-medium text-green-600">${metrics.totalDeposits.toLocaleString()}</span>
+                        <span className="font-medium text-green-600">{metrics.monthlyAdded}</span>
                       </TableCell>
                       <TableCell className="text-center border-l border-slate-100 dark:border-slate-800">
-                        <span className="font-medium text-red-600">${metrics.totalWithdrawals.toLocaleString()}</span>
+                        <span className="font-medium text-purple-600">{metrics.openAccounts}</span>
+                      </TableCell>
+                      <TableCell className="text-center border-l border-slate-100 dark:border-slate-800">
+                        <span className="font-medium text-emerald-600">${metrics.totalDeposits.toLocaleString()}</span>
                       </TableCell>
                       <TableCell className="text-center border-l border-slate-100 dark:border-slate-800">
                         <div className="flex justify-center gap-2">
