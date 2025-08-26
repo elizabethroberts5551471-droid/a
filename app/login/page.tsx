@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,27 @@ import { motion } from "framer-motion"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 
+function TimeoutHandler({ setErrorMessage }: { setErrorMessage: (message: string | null) => void }) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const timeout = urlParams.get("timeout")
+
+    if (timeout) {
+      setErrorMessage("Your session has expired. Please log in again.")
+    }
+  }, [mounted, setErrorMessage])
+
+  return null
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -23,8 +44,6 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false)
   const { login, isAuthenticated, loginError } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const timeout = searchParams.get("timeout")
   const [rememberMe, setRememberMe] = useState(false)
 
   // Set mounted state after component mounts
@@ -45,13 +64,6 @@ export default function LoginPage() {
       setErrorMessage(loginError)
     }
   }, [loginError])
-
-  // Set timeout message
-  useEffect(() => {
-    if (timeout) {
-      setErrorMessage("Your session has expired. Please log in again.")
-    }
-  }, [timeout])
 
   useEffect(() => {
     if (!mounted || typeof window === "undefined") return
@@ -165,6 +177,10 @@ export default function LoginPage() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden p-4">
+        <Suspense fallback={null}>
+          <TimeoutHandler setErrorMessage={setErrorMessage} />
+        </Suspense>
+
         {/* Theme toggle button */}
         <div className="absolute top-4 right-4 z-20">
           <Button
@@ -188,7 +204,7 @@ export default function LoginPage() {
           {/* Animated background blobs */}
           <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gray-200/50 dark:bg-gray-700/30 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
           <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-gray-300/50 dark:bg-gray-600/30 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
-          <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-gray-100/50 dark:bg-gray-800/30 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
+          <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-gray-100/50 dark:bg-gray-800/30 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
           <div className="absolute bottom-1/3 right-1/3 w-[300px] h-[300px] bg-gray-400/50 dark:bg-gray-500/30 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-3000" />
         </div>
 

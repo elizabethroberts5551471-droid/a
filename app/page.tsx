@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useState, useEffect, useRef, Suspense } from "react"
+import { useRouter } from "next/navigation"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
 import ClientsTable from "@/components/clients-table"
 import OrdersTable from "@/components/orders-table"
@@ -22,9 +22,30 @@ import AnnouncementManagement from "@/components/announcements/announcement-mana
 import AnnouncementPopup from "@/components/announcements/announcement-popup"
 import LoadingScreen from "@/components/loading-screen"
 
+function TabHandler({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const tabParam = urlParams.get("tab")
+
+    if (tabParam) {
+      setActiveTab(tabParam)
+    } else {
+      setActiveTab("dashboard")
+    }
+  }, [mounted, setActiveTab])
+
+  return null
+}
+
 export default function Home() {
-  const searchParams = useSearchParams()
-  const tabParam = searchParams.get("tab")
   const [activeTab, setActiveTab] = useState("dashboard")
   const [showLoadingScreen, setShowLoadingScreen] = useState(false)
   const [loadingScreenCompleted, setLoadingScreenCompleted] = useState(false)
@@ -49,14 +70,6 @@ export default function Home() {
       setShowLoadingScreen(true)
     }
   }, [isAuthenticated, loading])
-
-  useEffect(() => {
-    if (tabParam) {
-      setActiveTab(tabParam)
-    } else {
-      setActiveTab("dashboard")
-    }
-  }, [tabParam])
 
   const handleLoadingComplete = () => {
     console.log("[v0] Loading screen animation completed, hiding loading screen")
@@ -87,6 +100,10 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-background">
+      <Suspense fallback={null}>
+        <TabHandler setActiveTab={setActiveTab} />
+      </Suspense>
+
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Only show NavBar on desktop */}
