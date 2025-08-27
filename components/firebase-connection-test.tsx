@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
@@ -10,8 +10,15 @@ export default function FirebaseConnectionTest() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
   const [collections, setCollections] = useState<string[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   async function testConnection() {
+    if (!mounted) return
+    
     setStatus("loading")
     setMessage("Testing Firebase connection...")
 
@@ -27,6 +34,10 @@ export default function FirebaseConnectionTest() {
       setStatus("error")
       setMessage(`Error connecting to Firebase: ${error instanceof Error ? error.message : String(error)}`)
     }
+  }
+
+  if (!mounted) {
+    return null
   }
 
   return (

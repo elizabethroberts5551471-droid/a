@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 type LoadingScreenProps = {
   onAnimationComplete: () => void
@@ -13,6 +13,10 @@ export default function LoadingScreen({ onAnimationComplete, userName }: Loading
   const [fadeOut, setFadeOut] = useState(false)
 
   const fullText = "TEAM HOTEL"
+
+  const handleAnimationComplete = useCallback(() => {
+    onAnimationComplete()
+  }, [onAnimationComplete])
 
   useEffect(() => {
     let currentIndex = 0
@@ -27,7 +31,7 @@ export default function LoadingScreen({ onAnimationComplete, userName }: Loading
         setTimeout(() => {
           setFadeOut(true)
           setTimeout(() => {
-            onAnimationComplete()
+            handleAnimationComplete()
           }, 800)
         }, 500)
       }
@@ -36,7 +40,7 @@ export default function LoadingScreen({ onAnimationComplete, userName }: Loading
     return () => {
       clearInterval(typingInterval)
     }
-  }, [onAnimationComplete])
+  }, [handleAnimationComplete])
 
   return (
     <div
